@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 // RecordType
 struct RecordType
@@ -6,17 +7,19 @@ struct RecordType
 	int		id;
 	char	name;
 	int		order; 
+	struct RecordType* next;
 };
 
 // Fill out this structure
 struct HashType
 {
-
+	struct RecordType* recordType;
 };
 
 // Compute the hash function
-int hash(int x)
+int hash(int x, int size)
 {
+	return x % size;
 
 }
 
@@ -57,6 +60,26 @@ int parseData(char* inputFileName, struct RecordType** ppData)
 	return dataSz;
 }
 
+void insertRecords(struct HashType table[], struct RecordType rec, int size) {
+	
+	int ind = hash(rec.id, size);
+	
+	if (table[ind].recordType == NULL) {
+		
+		table[ind].recordType = &rec;
+	}
+	
+	else {
+		struct RecordType* current = table[ind].recordType;
+		
+		while (current->next != NULL) {
+			current = current->next;
+		} 
+		
+		current->next = &rec;
+	}
+}
+
 // prints the records
 void printRecords(struct RecordType pData[], int dataSz)
 {
@@ -73,13 +96,28 @@ void printRecords(struct RecordType pData[], int dataSz)
 // skip the indices which are free
 // the output will be in the format:
 // index x -> id, name, order -> id, name, order ....
-void displayRecordsInHash(struct HashType *pHashArray, int hashSz)
+void displayRecordsInHash(struct HashType pHashArray[], int hashSz)
 {
 	int i;
 
 	for (i=0;i<hashSz;++i)
 	{
 		// if index is occupied with any records, print all
+		if (pHashArray[i].recordType != NULL) {
+			printf("Index %d -> ", i);
+			
+			struct RecordType* current = pHashArray[i].recordType;
+			
+			while (current != NULL) {
+				
+				printf("%d, %c, %d -> ", current->id, current->name, current->order);
+				current = current->next;
+			}
+			
+			printf("NULL\n");
+		}
+		
+			
 	}
 }
 
@@ -91,4 +129,16 @@ int main(void)
 	recordSz = parseData("input.txt", &pRecords);
 	printRecords(pRecords, recordSz);
 	// Your hash implementation
+	int tableSz = 10;
+	
+	struct HashType* table = (struct HashType*)calloc(tableSz, sizeof(struct HashType));
+	
+	for (int i = 0; i < recordSz; i++) {
+		insertRecords(table, *(pRecords + i ), tableSz);
+	}
+	
+	
+	displayRecordsInHash(table, tableSz);
+	
+	return 0;
 }
